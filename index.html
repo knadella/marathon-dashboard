@@ -65,6 +65,7 @@
   .axis text { fill:var(--muted); font-family:var(--sans); font-size:11px; }
   .axis path, .axis line { stroke:var(--border); }
   .gridline { stroke:var(--border); stroke-opacity:.6; }
+  .gridy path, .gridy .domain { display:none; }
   .legend { font-size:.8rem; color:var(--muted); display:flex; gap:1.2rem; flex-wrap:wrap; margin-bottom:.6rem; }
   .legend span { display:inline-flex; align-items:center; gap:.4rem; }
   .swatch { width:14px; height:3px; display:inline-block; border-radius:2px; }
@@ -189,14 +190,18 @@ function render(d){
   draw(d);
 }
 
-function dims(el){ const w = el.clientWidth || 800; return { w, h: 300, m:{t:10,r:46,b:34,l:42} }; }
+function dims(el){ const w = el.clientWidth || 800; return { w, h: 300, m:{t:16,r:48,b:34,l:42} }; }
+const DUR = 900, EASE = d3.easeCubicOut;
+let WEEKS = [];
 
 function draw(d){
+  WEEKS = d.weeks;
   const labels = d.weeks.map(w=>w.week_label);
-  barChart("#volumeChart", labels, d.weeks.map(w=>w.target_km), d.weeks.map(w=>w.actual_km), "km");
+  barChart("#volumeChart", labels, d.weeks.map(w=>w.target_km), d.weeks.map(w=>w.actual_km));
   lineChart("#longRunChart", labels,
-    [{vals:d.weeks.map(w=>w.target_long_run), color:C.navy, dash:true},
-     {vals:d.weeks.map(w=>w.actual_long_run), color:C.green, dots:true}], "km");
+    [{vals:d.weeks.map(w=>w.target_long_run), color:C.navy, dash:true, label:"plan"},
+     {vals:d.weeks.map(w=>w.actual_long_run), color:C.green, dots:true, label:"actual"}],
+    {flagRace:true});
   paceChart("#paceChart", labels, d.weeks.map(w=>w.avg_pace_sec), d.paces.marathon.sec);
   recoveryChart("#recoveryChart", labels, d.weeks.map(w=>w.sleep_score), d.weeks.map(w=>w.resting_hr));
 }
@@ -206,73 +211,139 @@ function scaffold(sel){
   const svg = d3.select(el).append("svg").attr("viewBox",`0 0 ${w} ${h}`).attr("width","100%").attr("height",h);
   return {svg,w,h,m,iw:w-m.l-m.r,ih:h-m.t-m.b};
 }
-function xBand(labels,iw){ return d3.scaleBand().domain(labels).range([0,iw]).padding(0.25); }
-function addAxes(g,x,y,ih,fmtY){
-  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`)
-    .call(d3.axisBottom(x).tickValues(x.domain().filter((_,i)=>i%2===0)));
-  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5).tickFormat(fmtY||(v=>v)));
-  g.selectAll(".axis .tick line").clone().attr("class","gridline").attr("x2", g.node().__iw__||0);
+function xBand(labels,iw){ return d3.scaleBand().domain(labels).range([0,iw]).padding(0.3); }
+function xticks(x){ return x.domain().filter((_,i)=>i%2===0); }
+
+// Shade phase regions (taper/race/pre-training) as a "course" backdrop.
+function phaseBands(g,x,ih){
+  const fills = {"Taper":"rgba(212,165,116,0.14)","Race":"rgba(196,30,58,0.12)","Pre-training":"rgba(13,59,102,0.06)"};
+  WEEKS.forEach(w=>{
+    if(fills[w.phase]){
+      g.insert("rect",":first-child").attr("x",x(w.week_label)-x.step()*x.padding()/2)
+        .attr("y",0).attr("width",x.step()).attr("height",ih).attr("fill",fills[w.phase]);
+    }
+  });
+}
+// Vertical "you are here" marker with a runner at the current week.
+function currentMarker(g,x,ih){
+  const cur = WEEKS.find(w=>w.is_current);
+  if(!cur) return;
+  const cx = x(cur.week_label)+x.bandwidth()/2;
+  g.append("line").attr("x1",cx).attr("x2",cx).attr("y1",0).attr("y2",ih)
+    .attr("stroke",C.accent).attr("stroke-width",1).attr("stroke-dasharray","2,3").attr("opacity",0)
+    .transition().delay(DUR).duration(400).attr("opacity",.5);
+  g.append("text").attr("x",cx).attr("y",-4).attr("text-anchor","middle").attr("font-size","14px")
+    .text("🏃").attr("opacity",0).transition().delay(DUR).duration(400).attr("opacity",1);
+}
+// Finish-line flag at the race week's x position, near the top.
+function finishFlag(g,x,yTop){
+  const race = WEEKS.find(w=>w.phase==="Race");
+  if(!race) return;
+  const cx = x(race.week_label)+x.bandwidth()/2;
+  g.append("text").attr("x",cx).attr("y",yTop).attr("text-anchor","middle").attr("font-size","15px")
+    .text("🏁").attr("opacity",0).transition().delay(DUR*0.7).duration(500).attr("opacity",1);
+}
+function gridY(g,y,iw){
+  g.append("g").attr("class","axis gridy").call(d3.axisLeft(y).ticks(5).tickSize(-iw).tickFormat(""))
+    .call(s=>s.select(".domain").remove())
+    .call(s=>s.selectAll(".tick line").attr("class","gridline"));
 }
 
-function barChart(sel,labels,plan,actual,unit){
+function barChart(sel,labels,plan,actual){
   const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
-  const x=xBand(labels,iw); const y=d3.scaleLinear().domain([0,d3.max(plan)*1.1]).range([ih,0]);
-  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(x.domain().filter((_,i)=>i%2===0)));
-  const ya=g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5));
-  ya.selectAll(".tick line").clone().attr("class","gridline").attr("x2",iw);
+  const x=xBand(labels,iw); const y=d3.scaleLinear().domain([0,d3.max(plan)*1.12]).range([ih,0]);
+  phaseBands(g,x,ih); gridY(g,y,iw);
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(xticks(x)));
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5));
   const bw=x.bandwidth()/2;
-  g.selectAll(".pb").data(plan).join("rect").attr("x",(_,i)=>x(labels[i])).attr("y",v=>y(v))
-    .attr("width",bw).attr("height",v=>ih-y(v)).attr("fill",C.navy).attr("rx",2);
-  g.selectAll(".ab").data(actual).join("rect").attr("x",(_,i)=>x(labels[i])+bw).attr("y",v=>v==null?ih:y(v))
-    .attr("width",bw).attr("height",v=>v==null?0:ih-y(v)).attr("fill",C.accent).attr("rx",2);
+  // plan bars grow up
+  g.selectAll(".pb").data(plan).join("rect").attr("x",(_,i)=>x(labels[i])).attr("width",bw)
+    .attr("fill",C.navy).attr("rx",2).attr("y",ih).attr("height",0)
+    .transition().duration(DUR).delay((_,i)=>i*22).ease(EASE)
+    .attr("y",v=>v==null?ih:y(v)).attr("height",v=>v==null?0:ih-y(v));
+  // actual bars grow up
+  g.selectAll(".ab").data(actual).join("rect").attr("x",(_,i)=>x(labels[i])+bw).attr("width",bw)
+    .attr("fill",C.accent).attr("rx",2).attr("y",ih).attr("height",0)
+    .transition().duration(DUR).delay((_,i)=>i*22+120).ease(EASE)
+    .attr("y",v=>v==null?ih:y(v)).attr("height",v=>v==null?0:ih-y(v));
+  currentMarker(g,x,ih); finishFlag(g,x,-4);
 }
 
-function lineChart(sel,labels,series,unit){
+// Animate a path "drawing in" via stroke-dash.
+function drawPath(path,dur,delay){
+  const len = path.node().getTotalLength();
+  path.attr("stroke-dasharray", `${len} ${len}`).attr("stroke-dashoffset", len)
+    .transition().duration(dur).delay(delay||0).ease(d3.easeSinInOut).attr("stroke-dashoffset",0)
+    .on("end",function(){ if(!d3.select(this).attr("data-dash")) d3.select(this).attr("stroke-dasharray",null); });
+}
+function popDots(sel,delay){
+  sel.attr("r",0).transition().delay((_,i)=>(delay||0)+i*60).duration(300).ease(d3.easeBackOut.overshoot(2)).attr("r",3.5);
+}
+
+function lineChart(sel,labels,series,opts){
+  opts=opts||{};
   const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
   const x=xBand(labels,iw); const xc=v=>x(v)+x.bandwidth()/2;
   const allv=series.flatMap(s=>s.vals).filter(v=>v!=null);
-  const y=d3.scaleLinear().domain([0,d3.max(allv)*1.1]).range([ih,0]);
-  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(x.domain().filter((_,i)=>i%2===0)));
-  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5)).selectAll(".tick line").clone().attr("class","gridline").attr("x2",iw);
-  series.forEach(s=>{
-    const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>y(d.v));
+  const y=d3.scaleLinear().domain([0,d3.max(allv)*1.12]).range([ih,0]);
+  phaseBands(g,x,ih); gridY(g,y,iw);
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(xticks(x)));
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5));
+  series.forEach((s,si)=>{
+    const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>y(d.v)).curve(d3.curveMonotoneX);
     const data=labels.map((l,i)=>({l,v:s.vals[i]}));
-    g.append("path").datum(data).attr("fill","none").attr("stroke",s.color).attr("stroke-width",2)
-      .attr("stroke-linecap","round").attr("stroke-dasharray",s.dash?"5,4":null).attr("d",ln);
-    if(s.dots) g.selectAll(null).data(data.filter(d=>d.v!=null)).join("circle")
-      .attr("cx",d=>xc(d.l)).attr("cy",d=>y(d.v)).attr("r",3).attr("fill",s.color);
+    const p=g.append("path").datum(data).attr("fill","none").attr("stroke",s.color).attr("stroke-width",2.5)
+      .attr("stroke-linecap","round").attr("d",ln);
+    if(s.dash){ p.attr("stroke-dasharray","5,4").attr("data-dash","1"); }
+    drawPath(p, DUR+300, si*150);
+    if(s.dots) popDots(g.selectAll(null).data(data.filter(d=>d.v!=null)).join("circle")
+      .attr("cx",d=>xc(d.l)).attr("cy",d=>y(d.v)).attr("fill",s.color), DUR);
   });
+  if(opts.flagRace) finishFlag(g,x,-4);
+  currentMarker(g,x,ih);
 }
 
 function paceChart(sel,labels,paces,goalSec){
   const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
   const x=xBand(labels,iw); const xc=v=>x(v)+x.bandwidth()/2;
   const vals=paces.filter(v=>v!=null).concat([goalSec]);
-  const pad=15; const y=d3.scaleLinear().domain([d3.min(vals)-pad,d3.max(vals)+pad]).range([0,ih]); // not reversed: smaller sec (faster) at top
-  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(x.domain().filter((_,i)=>i%2===0)));
-  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5).tickFormat(fmtPace)).selectAll(".tick line").clone().attr("class","gridline").attr("x2",iw);
-  g.append("line").attr("x1",0).attr("x2",iw).attr("y1",y(goalSec)).attr("y2",y(goalSec))
+  const pad=15; const y=d3.scaleLinear().domain([d3.min(vals)-pad,d3.max(vals)+pad]).range([0,ih]); // faster (smaller sec) at top
+  phaseBands(g,x,ih);
+  g.append("g").attr("class","axis gridy").call(d3.axisLeft(y).ticks(5).tickSize(-iw).tickFormat(""))
+    .call(s=>s.select(".domain").remove()).call(s=>s.selectAll(".tick line").attr("class","gridline"));
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(xticks(x)));
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5).tickFormat(fmtPace));
+  // goal MP line sweeps across
+  const goal=g.append("line").attr("x1",0).attr("x2",0).attr("y1",y(goalSec)).attr("y2",y(goalSec))
     .attr("stroke",C.green).attr("stroke-width",2).attr("stroke-dasharray","5,4");
+  goal.transition().duration(DUR).ease(EASE).attr("x2",iw);
+  g.append("text").attr("x",iw).attr("y",y(goalSec)-6).attr("text-anchor","end").attr("font-size","10px")
+    .attr("fill",C.green).text("goal MP").attr("opacity",0).transition().delay(DUR).duration(400).attr("opacity",1);
   const data=labels.map((l,i)=>({l,v:paces[i]}));
-  const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>y(d.v));
-  g.append("path").datum(data).attr("fill","none").attr("stroke",C.accent).attr("stroke-width",2).attr("stroke-linecap","round").attr("d",ln);
-  g.selectAll(null).data(data.filter(d=>d.v!=null)).join("circle").attr("cx",d=>xc(d.l)).attr("cy",d=>y(d.v)).attr("r",3).attr("fill",C.accent);
+  const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>y(d.v)).curve(d3.curveMonotoneX);
+  drawPath(g.append("path").datum(data).attr("fill","none").attr("stroke",C.accent).attr("stroke-width",2.5).attr("stroke-linecap","round").attr("d",ln), DUR+300, 150);
+  popDots(g.selectAll(null).data(data.filter(d=>d.v!=null)).join("circle").attr("cx",d=>xc(d.l)).attr("cy",d=>y(d.v)).attr("fill",C.accent), DUR);
+  currentMarker(g,x,ih);
 }
 
 function recoveryChart(sel,labels,sleep,rhr){
   const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
   const x=xBand(labels,iw); const xc=v=>x(v)+x.bandwidth()/2;
   const sl=sleep.filter(v=>v!=null), hr=rhr.filter(v=>v!=null);
-  const yL=d3.scaleLinear().domain([d3.min(sl)-5||50, 100]).range([ih,0]);
+  const yL=d3.scaleLinear().domain([Math.min(50,(d3.min(sl)||50)-5), 100]).range([ih,0]);
   const yR=d3.scaleLinear().domain([(d3.min(hr)-3)||40,(d3.max(hr)+3)||70]).range([ih,0]);
-  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(x.domain().filter((_,i)=>i%2===0)));
-  g.append("g").attr("class","axis").call(d3.axisLeft(yL).ticks(5)).selectAll(".tick line").clone().attr("class","gridline").attr("x2",iw);
+  phaseBands(g,x,ih);
+  g.append("g").attr("class","axis gridy").call(d3.axisLeft(yL).ticks(5).tickSize(-iw).tickFormat(""))
+    .call(s=>s.select(".domain").remove()).call(s=>s.selectAll(".tick line").attr("class","gridline"));
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(xticks(x)));
+  g.append("g").attr("class","axis").call(d3.axisLeft(yL).ticks(5));
   g.append("g").attr("class","axis").attr("transform",`translate(${iw},0)`).call(d3.axisRight(yR).ticks(5));
-  const mk=(vals,yS,color)=>{ const data=labels.map((l,i)=>({l,v:vals[i]}));
-    const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>yS(d.v));
-    g.append("path").datum(data).attr("fill","none").attr("stroke",color).attr("stroke-width",2).attr("stroke-linecap","round").attr("d",ln);
-    g.selectAll(null).data(data.filter(d=>d.v!=null)).join("circle").attr("cx",d=>xc(d.l)).attr("cy",d=>yS(d.v)).attr("r",3).attr("fill",color); };
-  mk(sleep,yL,C.purple); mk(rhr,yR,C.accent);
+  const mk=(vals,yS,color,delay)=>{ const data=labels.map((l,i)=>({l,v:vals[i]}));
+    const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>yS(d.v)).curve(d3.curveMonotoneX);
+    drawPath(g.append("path").datum(data).attr("fill","none").attr("stroke",color).attr("stroke-width",2.5).attr("stroke-linecap","round").attr("d",ln), DUR+300, delay);
+    popDots(g.selectAll(null).data(data.filter(d=>d.v!=null)).join("circle").attr("cx",d=>xc(d.l)).attr("cy",d=>yS(d.v)).attr("fill",color), DUR); };
+  mk(sleep,yL,C.purple,0); mk(rhr,yR,C.accent,150);
+  currentMarker(g,x,ih);
 }
 
 load();
