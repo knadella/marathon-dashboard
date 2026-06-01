@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Marathon Training Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d27; --line: #2a2e3a;
+    --txt: #e6e8ee; --muted: #8b90a0; --accent: #ff6b35;
+    --good: #4ade80; --warn: #fbbf24; --bad: #f87171; --plan: #5b6478;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--txt);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 24px; max-width: 1100px; margin: 0 auto;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .card .value { font-size: 28px; font-weight: 650; margin-top: 6px; }
+  .card .value small { font-size: 14px; color: var(--muted); font-weight: 400; }
+  .chart-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 24px; }
+  .chart-wrap h2 { font-size: 15px; margin: 0 0 14px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; }
+  tr.current { background: rgba(255,107,53,.08); }
+  .phase { font-size: 11px; color: var(--muted); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; }
+  .pill.good { background: rgba(74,222,128,.15); color: var(--good); }
+  .pill.warn { background: rgba(251,191,36,.15); color: var(--warn); }
+  .pill.bad  { background: rgba(248,113,113,.15); color: var(--bad); }
+  .paces { display: flex; flex-wrap: wrap; gap: 18px; }
+  .paces div { font-size: 13px; } .paces b { color: var(--accent); }
+  footer { color: var(--muted); font-size: 11px; margin-top: 20px; text-align: center; }
+  .err { background: var(--bad); color: #000; padding: 12px; border-radius: 8px; }
+</style>
+</head>
+<body>
+  <h1>🏃 Marathon Training <span id="goal"></span></h1>
+  <div class="sub" id="subtitle">Loading…</div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="chart-wrap">
+    <h2>Weekly Mileage — Plan vs. Actual</h2>
+    <canvas id="mileageChart" height="110"></canvas>
+  </div>
+
+  <div class="chart-wrap">
+    <h2>Long Run Progression</h2>
+    <canvas id="longRunChart" height="100"></canvas>
+  </div>
+
+  <div class="chart-wrap" id="paceWrap">
+    <h2>Average Weekly Pace vs. Goal Marathon Pace</h2>
+    <canvas id="paceChart" height="100"></canvas>
+    <div class="paces" id="paceTargets" style="margin-top:14px"></div>
+  </div>
+
+  <div class="chart-wrap">
+    <h2>Full Plan</h2>
+    <div style="overflow-x:auto"><table id="planTable"></table></div>
+  </div>
+
+  <footer id="footer"></footer>
+
+<script>
+const fmtPace = s => { if(!s) return "—"; const m=Math.floor(s/60), x=s%60; return `${m}:${String(x).padStart(2,"0")}`; };
+
+async function load() {
+  let data;
+  try {
+    const res = await fetch("data.json?" + Date.now());
+    data = await res.json();
+  } catch (e) {
+    document.getElementById("subtitle").innerHTML = `<div class="err">Could not load data.json: ${e}</div>`;
+    return;
+  }
+  render(data);
+}
+
+function render(d) {
+  const s = d.summary;
+  document.getElementById("goal").textContent = `· ${s.goal_name}`;
+  document.getElementById("subtitle").textContent =
+    `Race ${s.race_date} · ${s.days_to_race} days to go · goal pace ${s.goal_pace_label}`;
+
+  // ---- summary cards ----
+  const adh = s.adherence_pct;
+  const adhClass = adh == null ? "" : adh >= 95 ? "good" : adh >= 80 ? "warn" : "bad";
+  const cards = [
+    ["Days to Race", s.days_to_race],
+    ["Current Week", s.current_week ? `${s.current_week}` : "—",
+      s.current_week ? `${s.current_actual_miles ?? 0}/${s.current_target_miles} mi` : ""],
+    ["Weeks Done", `${s.weeks_completed}<small>/${s.weeks_total}</small>`],
+    ["Miles to Date", `${s.mileage_actual_to_date}<small>/${s.mileage_target_to_date}</small>`],
+    ["Plan Adherence", adh == null ? "—" : `${adh}%`, "", adhClass],
+  ];
+  document.getElementById("cards").innerHTML = cards.map(([l,v,sub,cls]) =>
+    `<div class="card"><div class="label">${l}</div>
+     <div class="value ${cls?("pill "+cls):""}">${v}</div>
+     ${sub?`<div class="phase">${sub}</div>`:""}</div>`).join("");
+
+  const labels = d.weeks.map(w => w.week_label);
+  const targets = d.weeks.map(w => w.target_miles);
+  const actuals = d.weeks.map(w => w.actual_miles);
+
+  // ---- mileage chart ----
+  new Chart(document.getElementById("mileageChart"), {
+    type: "bar",
+    data: { labels, datasets: [
+      { label: "Plan", data: targets, backgroundColor: "#5b6478", borderRadius: 3 },
+      { label: "Actual", data: actuals, backgroundColor: "#ff6b35", borderRadius: 3 },
+    ]},
+    options: { responsive:true, plugins:{legend:{labels:{color:"#e6e8ee"}}},
+      scales:{ x:{ticks:{color:"#8b90a0"},grid:{display:false}},
+               y:{ticks:{color:"#8b90a0"},grid:{color:"#2a2e3a"},title:{display:true,text:"miles",color:"#8b90a0"}}}}
+  });
+
+  // ---- long run chart ----
+  new Chart(document.getElementById("longRunChart"), {
+    type: "line",
+    data: { labels, datasets: [
+      { label:"Plan long run", data:d.weeks.map(w=>w.target_long_run), borderColor:"#5b6478", borderDash:[5,4], pointRadius:0, tension:.3 },
+      { label:"Actual long run", data:d.weeks.map(w=>w.actual_long_run), borderColor:"#4ade80", backgroundColor:"#4ade80", pointRadius:3, tension:.3, spanGaps:true },
+    ]},
+    options: { responsive:true, plugins:{legend:{labels:{color:"#e6e8ee"}}},
+      scales:{ x:{ticks:{color:"#8b90a0"},grid:{display:false}},
+               y:{ticks:{color:"#8b90a0"},grid:{color:"#2a2e3a"},title:{display:true,text:"miles",color:"#8b90a0"}}}}
+  });
+
+  // ---- pace chart ----
+  const goalSec = d.paces.marathon.sec;
+  new Chart(document.getElementById("paceChart"), {
+    type: "line",
+    data: { labels, datasets: [
+      { label:"Avg weekly pace", data:d.weeks.map(w=>w.avg_pace_sec), borderColor:"#ff6b35", backgroundColor:"#ff6b35", pointRadius:3, tension:.3, spanGaps:true },
+      { label:"Goal MP", data:labels.map(()=>goalSec), borderColor:"#4ade80", borderDash:[5,4], pointRadius:0 },
+    ]},
+    options: { responsive:true, plugins:{ legend:{labels:{color:"#e6e8ee"}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtPace(c.parsed.y)}/mi`}}},
+      scales:{ x:{ticks:{color:"#8b90a0"},grid:{display:false}},
+               y:{reverse:true, ticks:{color:"#8b90a0", callback:v=>fmtPace(v)}, grid:{color:"#2a2e3a"},
+                  title:{display:true,text:"pace (faster ↑)",color:"#8b90a0"}}}}
+  });
+
+  document.getElementById("paceTargets").innerHTML = Object.entries(d.paces)
+    .map(([k,v]) => `<div>${k}: <b>${v.label}</b></div>`).join("");
+
+  // ---- plan table ----
+  const rows = d.weeks.map(w => {
+    const cls = w.is_current ? "current" : "";
+    const a = w.actual_miles == null ? "—" : w.actual_miles;
+    return `<tr class="${cls}">
+      <td>${w.week_label} <span class="phase">${w.phase}</span></td>
+      <td>${w.week_start}</td>
+      <td>${w.target_miles}</td>
+      <td>${a}</td>
+      <td>${w.target_long_run}</td>
+      <td>${w.actual_long_run ?? "—"}</td>
+      <td>${w.avg_pace_label ?? "—"}</td>
+    </tr>`;
+  }).join("");
+  document.getElementById("planTable").innerHTML =
+    `<thead><tr><th>Week</th><th>Starts</th><th>Plan mi</th><th>Actual mi</th>
+       <th>Plan long</th><th>Actual long</th><th>Avg pace</th></tr></thead><tbody>${rows}</tbody>`;
+
+  const gen = new Date(d.generated_at);
+  document.getElementById("footer").textContent = `Last updated ${gen.toLocaleString()}`;
+}
+
+load();
+</script>
+</body>
+</html>
