@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-01T01:55:16.774258+00:00",
+  "generated_at": "2026-05-31T20:00:00+00:00",
   "units": {
     "distance": "km",
     "pace": "sec_per_km"
@@ -39,7 +39,7 @@
     "current_week": null,
     "current_target_km": null,
     "current_actual_km": null,
-    "latest_resting_hr": 53.7,
+    "latest_resting_hr": 53.4,
     "latest_sleep_score": 70.9
   },
   "weeks": [
@@ -49,15 +49,15 @@
       "phase": "Pre-training",
       "target_km": null,
       "target_long_run": null,
-      "actual_km": 13.4,
-      "actual_long_run": 5.0,
-      "runs": 3,
-      "avg_pace_sec": 400,
-      "avg_pace_label": "6:40/km",
+      "actual_km": 31.0,
+      "actual_long_run": 12.0,
+      "runs": 4,
+      "avg_pace_sec": 350,
+      "avg_pace_label": "5:50/km",
       "sleep_score": 70.9,
-      "resting_hr": 53.7,
-      "hrv": 49.8,
-      "sleep_hours": 5.9,
+      "resting_hr": 53.4,
+      "hrv": 49.9,
+      "sleep_hours": 6.9,
       "is_current": false,
       "is_past": true
     },

@@ -3,177 +3,276 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Marathon Training Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<title>Marathon Training · Sub-4:00</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>
   :root {
-    --bg: #0f1117; --card: #1a1d27; --line: #2a2e3a;
-    --txt: #e6e8ee; --muted: #8b90a0; --accent: #ff6b35;
-    --good: #4ade80; --warn: #fbbf24; --bad: #f87171; --plan: #5b6478;
+    --bg-paper:#FFF8F0; --bg-card:#FFFFFF; --bg-elevated:#FEF6EC; --bg-dark:#1A1A1A;
+    --accent:#C41E3A; --navy:#0D3B66; --tan:#D4A574; --green:#2E8B57; --purple:#6B4C9A; --orange:#E07B39;
+    --txt:#1A1A1A; --txt2:#4A4A4A; --muted:#7A7A7A; --inverse:#FFFAF5;
+    --border:rgba(26,26,26,0.08); --border-med:rgba(26,26,26,0.15);
+    --shadow:0 2px 8px rgba(26,26,26,0.06); --shadow-hover:0 4px 16px rgba(26,26,26,0.1);
+    --serif:'Libre Baskerville',Georgia,serif; --sans:'IBM Plex Sans',-apple-system,sans-serif;
+    --radius:4px;
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--txt);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    padding: 24px; max-width: 1100px; margin: 0 auto;
-  }
-  h1 { font-size: 22px; margin: 0 0 4px; }
-  .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-  .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
-  .card .value { font-size: 28px; font-weight: 650; margin-top: 6px; }
-  .card .value small { font-size: 14px; color: var(--muted); font-weight: 400; }
-  .chart-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 24px; }
-  .chart-wrap h2 { font-size: 15px; margin: 0 0 14px; font-weight: 600; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--line); }
-  th:first-child, td:first-child { text-align: left; }
-  th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; }
-  tr.current { background: rgba(255,107,53,.08); }
-  .phase { font-size: 11px; color: var(--muted); }
-  .pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; }
-  .pill.good { background: rgba(74,222,128,.15); color: var(--good); }
-  .pill.warn { background: rgba(251,191,36,.15); color: var(--warn); }
-  .pill.bad  { background: rgba(248,113,113,.15); color: var(--bad); }
-  .paces { display: flex; flex-wrap: wrap; gap: 18px; }
-  .paces div { font-size: 13px; } .paces b { color: var(--accent); }
-  footer { color: var(--muted); font-size: 11px; margin-top: 20px; text-align: center; }
-  .err { background: var(--bad); color: #000; padding: 12px; border-radius: 8px; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg-paper); color:var(--txt2);
+    font-family:var(--sans); font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased; }
+  .container { max-width:1200px; margin:0 auto; padding:2rem; }
+  @media(min-width:768px){ .container{ padding:3rem; } }
+
+  header.hero { border-bottom:2px solid var(--accent); padding-bottom:1.5rem; margin-bottom:2rem; }
+  .eyebrow { text-transform:uppercase; font-weight:600; font-size:.72rem; letter-spacing:.12em;
+    color:var(--accent); margin-bottom:.5rem; }
+  h1 { font-family:var(--serif); font-weight:700; color:var(--txt);
+    font-size:clamp(1.9rem,4vw,2.75rem); line-height:1.2; letter-spacing:-.02em; margin:0 0 .4rem; }
+  .sub { color:var(--muted); font-size:.95rem; }
+  .sub b { color:var(--txt2); }
+
+  .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-bottom:2rem; }
+  .stat { background:var(--bg-elevated); border:1px solid var(--border); border-left:4px solid var(--navy);
+    border-radius:0 var(--radius) var(--radius) 0; padding:1.1rem 1.25rem; }
+  .stat .label { text-transform:uppercase; font-size:.68rem; font-weight:600; letter-spacing:.1em; color:var(--muted); }
+  .stat .val { font-family:var(--serif); font-weight:700; font-size:1.9rem; color:var(--txt); margin-top:.35rem; line-height:1.1; }
+  .stat .val small { font-size:.9rem; color:var(--muted); font-weight:400; font-family:var(--sans); }
+  .stat .note { font-size:.75rem; color:var(--muted); margin-top:.2rem; }
+  .stat.accent { border-left-color:var(--accent); }
+  .stat .val.good{ color:var(--green); } .stat .val.warn{ color:var(--orange); } .stat .val.bad{ color:var(--accent); }
+
+  .panel { background:var(--bg-card); border:1px solid var(--border); box-shadow:var(--shadow);
+    border-radius:0 var(--radius) var(--radius) 0; padding:1.75rem; margin-bottom:1.75rem; position:relative; }
+  .panel::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--navy); border-radius:var(--radius) 0 0 var(--radius); }
+  .panel h2 { font-family:var(--serif); font-weight:700; font-size:1.2rem; color:var(--txt); margin:0 0 .25rem; }
+  .panel .cap { font-style:italic; color:var(--muted); font-size:.85rem; margin:0 0 1.2rem; padding-bottom:.8rem; border-bottom:1px solid var(--border); }
+
+  .paces { display:flex; flex-wrap:wrap; gap:1.4rem; margin-top:1rem; }
+  .paces div { font-size:.85rem; color:var(--muted); }
+  .paces b { color:var(--accent); font-size:.95rem; }
+  .paces .k { text-transform:uppercase; letter-spacing:.08em; font-size:.7rem; font-weight:600; }
+
+  table { width:100%; border-collapse:collapse; font-size:.85rem; }
+  th,td { padding:.55rem .7rem; text-align:right; border-bottom:1px solid var(--border); }
+  th:first-child,td:first-child{ text-align:left; }
+  th { text-transform:uppercase; font-size:.66rem; font-weight:600; letter-spacing:.08em; color:var(--muted); }
+  td.lbl { font-weight:600; color:var(--txt); }
+  td .phase { font-weight:400; color:var(--muted); font-size:.72rem; margin-left:.3rem; }
+  tr.current { background:rgba(196,30,58,.06); }
+  tr.future td { color:var(--muted); }
+
+  .axis text { fill:var(--muted); font-family:var(--sans); font-size:11px; }
+  .axis path, .axis line { stroke:var(--border); }
+  .gridline { stroke:var(--border); stroke-opacity:.6; }
+  .legend { font-size:.8rem; color:var(--muted); display:flex; gap:1.2rem; flex-wrap:wrap; margin-bottom:.6rem; }
+  .legend span { display:inline-flex; align-items:center; gap:.4rem; }
+  .swatch { width:14px; height:3px; display:inline-block; border-radius:2px; }
+  .swatch.dot { width:9px; height:9px; border-radius:50%; }
+  footer { color:var(--muted); font-size:.75rem; margin-top:1.5rem; text-align:center; }
+  .err { background:rgba(196,30,58,.08); border-left:4px solid var(--accent); padding:1rem; border-radius:0 4px 4px 0; color:var(--txt); }
+  svg { max-width:100%; height:auto; }
 </style>
 </head>
 <body>
-  <h1>🏃 Marathon Training <span id="goal"></span></h1>
-  <div class="sub" id="subtitle">Loading…</div>
+<div class="container">
+  <header class="hero">
+    <div class="eyebrow">Training Tracker</div>
+    <h1 id="title">Marathon Training</h1>
+    <div class="sub" id="subtitle">Loading…</div>
+  </header>
 
-  <div class="cards" id="cards"></div>
+  <div class="stat-grid" id="stats"></div>
 
-  <div class="chart-wrap">
-    <h2>Weekly Mileage — Plan vs. Actual</h2>
-    <canvas id="mileageChart" height="110"></canvas>
+  <div class="panel">
+    <h2>Weekly Volume — Plan vs. Actual</h2>
+    <p class="cap">Kilometres per week against the periodised plan</p>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--navy)"></i> Plan</span>
+      <span><i class="swatch" style="background:var(--accent)"></i> Actual</span>
+    </div>
+    <div id="volumeChart"></div>
   </div>
 
-  <div class="chart-wrap">
+  <div class="panel">
     <h2>Long Run Progression</h2>
-    <canvas id="longRunChart" height="100"></canvas>
+    <p class="cap">Longest single run each week, building toward race distance</p>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--navy)"></i> Plan</span>
+      <span><i class="swatch dot" style="background:var(--green)"></i> Actual</span>
+    </div>
+    <div id="longRunChart"></div>
   </div>
 
-  <div class="chart-wrap" id="paceWrap">
-    <h2>Average Weekly Pace vs. Goal Marathon Pace</h2>
-    <canvas id="paceChart" height="100"></canvas>
-    <div class="paces" id="paceTargets" style="margin-top:14px"></div>
+  <div class="panel">
+    <h2>Average Pace vs. Goal Marathon Pace</h2>
+    <p class="cap">Weekly average pace; goal marathon pace shown as reference (faster is higher)</p>
+    <div class="legend">
+      <span><i class="swatch dot" style="background:var(--accent)"></i> Avg pace</span>
+      <span><i class="swatch" style="background:var(--green)"></i> Goal MP</span>
+    </div>
+    <div id="paceChart"></div>
+    <div class="paces" id="paceTargets"></div>
   </div>
 
-  <div class="chart-wrap">
+  <div class="panel">
+    <h2>Recovery — Sleep Score &amp; Resting Heart Rate</h2>
+    <p class="cap">Weekly averages from Oura; rising sleep / falling resting HR signal good adaptation</p>
+    <div class="legend">
+      <span><i class="swatch dot" style="background:var(--purple)"></i> Sleep score</span>
+      <span><i class="swatch dot" style="background:var(--accent)"></i> Resting HR (bpm)</span>
+    </div>
+    <div id="recoveryChart"></div>
+  </div>
+
+  <div class="panel">
     <h2>Full Plan</h2>
+    <p class="cap">Every week of the build to race day</p>
     <div style="overflow-x:auto"><table id="planTable"></table></div>
   </div>
 
   <footer id="footer"></footer>
+</div>
 
 <script>
-const fmtPace = s => { if(!s) return "—"; const m=Math.floor(s/60), x=s%60; return `${m}:${String(x).padStart(2,"0")}`; };
+const C = { accent:"#C41E3A", navy:"#0D3B66", green:"#2E8B57", purple:"#6B4C9A", muted:"#7A7A7A", border:"rgba(26,26,26,0.08)" };
+const fmtPace = s => { if(s==null) return "—"; const m=Math.floor(s/60), x=Math.round(s%60); return `${m}:${String(x).padStart(2,"0")}`; };
 
-async function load() {
-  let data;
-  try {
-    const res = await fetch("data.json?" + Date.now());
-    data = await res.json();
-  } catch (e) {
-    document.getElementById("subtitle").innerHTML = `<div class="err">Could not load data.json: ${e}</div>`;
-    return;
-  }
-  render(data);
+async function load(){
+  let d;
+  try { d = await (await fetch("data.json?"+Date.now())).json(); }
+  catch(e){ document.getElementById("subtitle").innerHTML = `<div class="err">Could not load data.json: ${e}</div>`; return; }
+  render(d);
+  window.addEventListener("resize", () => { document.querySelectorAll(".panel svg").forEach(s=>s.remove()); draw(d); });
 }
 
-function render(d) {
+function render(d){
   const s = d.summary;
-  document.getElementById("goal").textContent = `· ${s.goal_name}`;
-  document.getElementById("subtitle").textContent =
-    `Race ${s.race_date} · ${s.days_to_race} days to go · goal pace ${s.goal_pace_label}`;
+  document.getElementById("title").textContent = `Marathon Training · ${s.goal_name}`;
+  document.getElementById("subtitle").innerHTML =
+    `Race <b>${s.race_date}</b> · <b>${s.days_to_race}</b> days to go · goal pace <b>${s.goal_pace_label}</b>`;
 
-  // ---- summary cards ----
   const adh = s.adherence_pct;
-  const adhClass = adh == null ? "" : adh >= 95 ? "good" : adh >= 80 ? "warn" : "bad";
-  const cards = [
-    ["Days to Race", s.days_to_race],
-    ["Current Week", s.current_week ? `${s.current_week}` : "—",
-      s.current_week ? `${s.current_actual_miles ?? 0}/${s.current_target_miles} mi` : ""],
-    ["Weeks Done", `${s.weeks_completed}<small>/${s.weeks_total}</small>`],
-    ["Miles to Date", `${s.mileage_actual_to_date}<small>/${s.mileage_target_to_date}</small>`],
-    ["Plan Adherence", adh == null ? "—" : `${adh}%`, "", adhClass],
+  const adhCls = adh==null ? "" : adh>=95?"good":adh>=80?"warn":"bad";
+  const stats = [
+    ["Days to Race", s.days_to_race, "", "accent"],
+    ["Current Week", s.current_week||"—", s.current_week?`${s.current_actual_km??0} / ${s.current_target_km} km`:"" ],
+    ["Weeks Done", `${s.weeks_completed}<small> / ${s.weeks_total}</small>`, ""],
+    ["Volume to Date", `${s.km_actual_to_date}<small> / ${s.km_target_to_date} km</small>`, ""],
+    ["Adherence", adh==null?"—":`${adh}%`, "", "", adhCls],
+    ["Latest Sleep", s.latest_sleep_score??"—", "Oura score"],
+    ["Resting HR", s.latest_resting_hr!=null?`${s.latest_resting_hr}<small> bpm</small>`:"—", "latest week avg"],
   ];
-  document.getElementById("cards").innerHTML = cards.map(([l,v,sub,cls]) =>
-    `<div class="card"><div class="label">${l}</div>
-     <div class="value ${cls?("pill "+cls):""}">${v}</div>
-     ${sub?`<div class="phase">${sub}</div>`:""}</div>`).join("");
-
-  const labels = d.weeks.map(w => w.week_label);
-  const targets = d.weeks.map(w => w.target_miles);
-  const actuals = d.weeks.map(w => w.actual_miles);
-
-  // ---- mileage chart ----
-  new Chart(document.getElementById("mileageChart"), {
-    type: "bar",
-    data: { labels, datasets: [
-      { label: "Plan", data: targets, backgroundColor: "#5b6478", borderRadius: 3 },
-      { label: "Actual", data: actuals, backgroundColor: "#ff6b35", borderRadius: 3 },
-    ]},
-    options: { responsive:true, plugins:{legend:{labels:{color:"#e6e8ee"}}},
-      scales:{ x:{ticks:{color:"#8b90a0"},grid:{display:false}},
-               y:{ticks:{color:"#8b90a0"},grid:{color:"#2a2e3a"},title:{display:true,text:"miles",color:"#8b90a0"}}}}
-  });
-
-  // ---- long run chart ----
-  new Chart(document.getElementById("longRunChart"), {
-    type: "line",
-    data: { labels, datasets: [
-      { label:"Plan long run", data:d.weeks.map(w=>w.target_long_run), borderColor:"#5b6478", borderDash:[5,4], pointRadius:0, tension:.3 },
-      { label:"Actual long run", data:d.weeks.map(w=>w.actual_long_run), borderColor:"#4ade80", backgroundColor:"#4ade80", pointRadius:3, tension:.3, spanGaps:true },
-    ]},
-    options: { responsive:true, plugins:{legend:{labels:{color:"#e6e8ee"}}},
-      scales:{ x:{ticks:{color:"#8b90a0"},grid:{display:false}},
-               y:{ticks:{color:"#8b90a0"},grid:{color:"#2a2e3a"},title:{display:true,text:"miles",color:"#8b90a0"}}}}
-  });
-
-  // ---- pace chart ----
-  const goalSec = d.paces.marathon.sec;
-  new Chart(document.getElementById("paceChart"), {
-    type: "line",
-    data: { labels, datasets: [
-      { label:"Avg weekly pace", data:d.weeks.map(w=>w.avg_pace_sec), borderColor:"#ff6b35", backgroundColor:"#ff6b35", pointRadius:3, tension:.3, spanGaps:true },
-      { label:"Goal MP", data:labels.map(()=>goalSec), borderColor:"#4ade80", borderDash:[5,4], pointRadius:0 },
-    ]},
-    options: { responsive:true, plugins:{ legend:{labels:{color:"#e6e8ee"}},
-        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtPace(c.parsed.y)}/mi`}}},
-      scales:{ x:{ticks:{color:"#8b90a0"},grid:{display:false}},
-               y:{reverse:true, ticks:{color:"#8b90a0", callback:v=>fmtPace(v)}, grid:{color:"#2a2e3a"},
-                  title:{display:true,text:"pace (faster ↑)",color:"#8b90a0"}}}}
-  });
+  document.getElementById("stats").innerHTML = stats.map(([l,v,note,cls,vcls])=>
+    `<div class="stat ${cls||""}"><div class="label">${l}</div>
+      <div class="val ${vcls||""}">${v}</div>${note?`<div class="note">${note}</div>`:""}</div>`).join("");
 
   document.getElementById("paceTargets").innerHTML = Object.entries(d.paces)
-    .map(([k,v]) => `<div>${k}: <b>${v.label}</b></div>`).join("");
+    .map(([k,v])=>`<div><span class="k">${k}</span><br><b>${v.label}</b></div>`).join("");
 
-  // ---- plan table ----
-  const rows = d.weeks.map(w => {
-    const cls = w.is_current ? "current" : "";
-    const a = w.actual_miles == null ? "—" : w.actual_miles;
+  const rows = d.weeks.map(w=>{
+    const cls = w.is_current?"current":(w.is_past?"":"future");
     return `<tr class="${cls}">
-      <td>${w.week_label} <span class="phase">${w.phase}</span></td>
+      <td class="lbl">${w.week_label}<span class="phase">${w.phase}</span></td>
       <td>${w.week_start}</td>
-      <td>${w.target_miles}</td>
-      <td>${a}</td>
-      <td>${w.target_long_run}</td>
-      <td>${w.actual_long_run ?? "—"}</td>
-      <td>${w.avg_pace_label ?? "—"}</td>
-    </tr>`;
-  }).join("");
+      <td>${w.target_km??"—"}</td>
+      <td>${w.actual_km??"—"}</td>
+      <td>${w.avg_pace_label??"—"}</td>
+      <td>${w.sleep_score??"—"}</td>
+      <td>${w.resting_hr??"—"}</td>
+    </tr>`;}).join("");
   document.getElementById("planTable").innerHTML =
-    `<thead><tr><th>Week</th><th>Starts</th><th>Plan mi</th><th>Actual mi</th>
-       <th>Plan long</th><th>Actual long</th><th>Avg pace</th></tr></thead><tbody>${rows}</tbody>`;
+    `<thead><tr><th>Week</th><th>Starts</th><th>Plan km</th><th>Actual km</th>
+      <th>Avg pace</th><th>Sleep</th><th>RHR</th></tr></thead><tbody>${rows}</tbody>`;
 
-  const gen = new Date(d.generated_at);
-  document.getElementById("footer").textContent = `Last updated ${gen.toLocaleString()}`;
+  document.getElementById("footer").textContent = `Last updated ${new Date(d.generated_at).toLocaleString()}`;
+  draw(d);
+}
+
+function dims(el){ const w = el.clientWidth || 800; return { w, h: 300, m:{t:10,r:46,b:34,l:42} }; }
+
+function draw(d){
+  const labels = d.weeks.map(w=>w.week_label);
+  barChart("#volumeChart", labels, d.weeks.map(w=>w.target_km), d.weeks.map(w=>w.actual_km), "km");
+  lineChart("#longRunChart", labels,
+    [{vals:d.weeks.map(w=>w.target_long_run), color:C.navy, dash:true},
+     {vals:d.weeks.map(w=>w.actual_long_run), color:C.green, dots:true}], "km");
+  paceChart("#paceChart", labels, d.weeks.map(w=>w.avg_pace_sec), d.paces.marathon.sec);
+  recoveryChart("#recoveryChart", labels, d.weeks.map(w=>w.sleep_score), d.weeks.map(w=>w.resting_hr));
+}
+
+function scaffold(sel){
+  const el = document.querySelector(sel); const {w,h,m}=dims(el);
+  const svg = d3.select(el).append("svg").attr("viewBox",`0 0 ${w} ${h}`).attr("width","100%").attr("height",h);
+  return {svg,w,h,m,iw:w-m.l-m.r,ih:h-m.t-m.b};
+}
+function xBand(labels,iw){ return d3.scaleBand().domain(labels).range([0,iw]).padding(0.25); }
+function addAxes(g,x,y,ih,fmtY){
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`)
+    .call(d3.axisBottom(x).tickValues(x.domain().filter((_,i)=>i%2===0)));
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5).tickFormat(fmtY||(v=>v)));
+  g.selectAll(".axis .tick line").clone().attr("class","gridline").attr("x2", g.node().__iw__||0);
+}
+
+function barChart(sel,labels,plan,actual,unit){
+  const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
+  const x=xBand(labels,iw); const y=d3.scaleLinear().domain([0,d3.max(plan)*1.1]).range([ih,0]);
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(x.domain().filter((_,i)=>i%2===0)));
+  const ya=g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5));
+  ya.selectAll(".tick line").clone().attr("class","gridline").attr("x2",iw);
+  const bw=x.bandwidth()/2;
+  g.selectAll(".pb").data(plan).join("rect").attr("x",(_,i)=>x(labels[i])).attr("y",v=>y(v))
+    .attr("width",bw).attr("height",v=>ih-y(v)).attr("fill",C.navy).attr("rx",2);
+  g.selectAll(".ab").data(actual).join("rect").attr("x",(_,i)=>x(labels[i])+bw).attr("y",v=>v==null?ih:y(v))
+    .attr("width",bw).attr("height",v=>v==null?0:ih-y(v)).attr("fill",C.accent).attr("rx",2);
+}
+
+function lineChart(sel,labels,series,unit){
+  const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
+  const x=xBand(labels,iw); const xc=v=>x(v)+x.bandwidth()/2;
+  const allv=series.flatMap(s=>s.vals).filter(v=>v!=null);
+  const y=d3.scaleLinear().domain([0,d3.max(allv)*1.1]).range([ih,0]);
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(x.domain().filter((_,i)=>i%2===0)));
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5)).selectAll(".tick line").clone().attr("class","gridline").attr("x2",iw);
+  series.forEach(s=>{
+    const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>y(d.v));
+    const data=labels.map((l,i)=>({l,v:s.vals[i]}));
+    g.append("path").datum(data).attr("fill","none").attr("stroke",s.color).attr("stroke-width",2)
+      .attr("stroke-linecap","round").attr("stroke-dasharray",s.dash?"5,4":null).attr("d",ln);
+    if(s.dots) g.selectAll(null).data(data.filter(d=>d.v!=null)).join("circle")
+      .attr("cx",d=>xc(d.l)).attr("cy",d=>y(d.v)).attr("r",3).attr("fill",s.color);
+  });
+}
+
+function paceChart(sel,labels,paces,goalSec){
+  const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
+  const x=xBand(labels,iw); const xc=v=>x(v)+x.bandwidth()/2;
+  const vals=paces.filter(v=>v!=null).concat([goalSec]);
+  const pad=15; const y=d3.scaleLinear().domain([d3.min(vals)-pad,d3.max(vals)+pad]).range([0,ih]); // not reversed: smaller sec (faster) at top
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(x.domain().filter((_,i)=>i%2===0)));
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5).tickFormat(fmtPace)).selectAll(".tick line").clone().attr("class","gridline").attr("x2",iw);
+  g.append("line").attr("x1",0).attr("x2",iw).attr("y1",y(goalSec)).attr("y2",y(goalSec))
+    .attr("stroke",C.green).attr("stroke-width",2).attr("stroke-dasharray","5,4");
+  const data=labels.map((l,i)=>({l,v:paces[i]}));
+  const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>y(d.v));
+  g.append("path").datum(data).attr("fill","none").attr("stroke",C.accent).attr("stroke-width",2).attr("stroke-linecap","round").attr("d",ln);
+  g.selectAll(null).data(data.filter(d=>d.v!=null)).join("circle").attr("cx",d=>xc(d.l)).attr("cy",d=>y(d.v)).attr("r",3).attr("fill",C.accent);
+}
+
+function recoveryChart(sel,labels,sleep,rhr){
+  const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
+  const x=xBand(labels,iw); const xc=v=>x(v)+x.bandwidth()/2;
+  const sl=sleep.filter(v=>v!=null), hr=rhr.filter(v=>v!=null);
+  const yL=d3.scaleLinear().domain([d3.min(sl)-5||50, 100]).range([ih,0]);
+  const yR=d3.scaleLinear().domain([(d3.min(hr)-3)||40,(d3.max(hr)+3)||70]).range([ih,0]);
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(x.domain().filter((_,i)=>i%2===0)));
+  g.append("g").attr("class","axis").call(d3.axisLeft(yL).ticks(5)).selectAll(".tick line").clone().attr("class","gridline").attr("x2",iw);
+  g.append("g").attr("class","axis").attr("transform",`translate(${iw},0)`).call(d3.axisRight(yR).ticks(5));
+  const mk=(vals,yS,color)=>{ const data=labels.map((l,i)=>({l,v:vals[i]}));
+    const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>yS(d.v));
+    g.append("path").datum(data).attr("fill","none").attr("stroke",color).attr("stroke-width",2).attr("stroke-linecap","round").attr("d",ln);
+    g.selectAll(null).data(data.filter(d=>d.v!=null)).join("circle").attr("cx",d=>xc(d.l)).attr("cy",d=>yS(d.v)).attr("r",3).attr("fill",color); };
+  mk(sleep,yL,C.purple); mk(rhr,yR,C.accent);
 }
 
 load();
