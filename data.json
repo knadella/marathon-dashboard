@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-01T02:04:09.959038+00:00",
+  "generated_at": "2026-06-01T08:27:53.287656+00:00",
   "units": {
     "distance": "km",
     "pace": "sec_per_km"
@@ -29,7 +29,7 @@
   "summary": {
     "goal_name": "Sub-4:00",
     "race_date": "2026-11-08",
-    "days_to_race": 161,
+    "days_to_race": 160,
     "goal_pace_label": "5:41/km",
     "weeks_total": 24,
     "weeks_completed": 0,
@@ -39,7 +39,7 @@
     "current_week": null,
     "current_target_km": null,
     "current_actual_km": null,
-    "latest_resting_hr": 53.7,
+    "latest_resting_hr": 53.1,
     "latest_sleep_score": 70.9
   },
   "weeks": [
@@ -55,9 +55,9 @@
       "avg_pace_sec": 400,
       "avg_pace_label": "6:40/km",
       "sleep_score": 70.9,
-      "resting_hr": 53.7,
-      "hrv": 49.8,
-      "sleep_hours": 5.9,
+      "resting_hr": 53.1,
+      "hrv": 51.1,
+      "sleep_hours": 6.0,
       "is_current": false,
       "is_past": true
     },
