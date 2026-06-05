@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-04T07:18:09.484479+00:00",
+  "generated_at": "2026-06-05T07:01:09.425240+00:00",
   "units": {
     "distance": "km",
     "pace": "sec_per_km"
@@ -29,7 +29,7 @@
   "summary": {
     "goal_name": "Sub-4:00",
     "race_date": "2026-11-08",
-    "days_to_race": 157,
+    "days_to_race": 156,
     "goal_pace_label": "5:41/km",
     "weeks_total": 24,
     "weeks_completed": 0,
