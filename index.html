@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Marathon Training · Sub-4:00</title>
+<title>Verona Marathon · Sub-4:00</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -149,9 +149,11 @@ async function load(){
 
 function render(d){
   const s = d.summary;
-  document.getElementById("title").textContent = `Marathon Training · ${s.goal_name}`;
+  document.getElementById("title").textContent =
+    s.race_name ? `${s.race_name} · ${s.goal_name}` : `Marathon Training · ${s.goal_name}`;
+  const racePrefix = s.race_name ? `${s.race_name} · ` : "";
   document.getElementById("subtitle").innerHTML =
-    `Race <b>${s.race_date}</b> · <b>${s.days_to_race}</b> days to go · goal pace <b>${s.goal_pace_label}</b>`;
+    `${racePrefix}Race <b>${s.race_date}</b> · <b>${s.days_to_race}</b> days to go · goal pace <b>${s.goal_pace_label}</b>`;
 
   const adh = s.adherence_pct;
   const adhCls = adh==null ? "" : adh>=95?"good":adh>=80?"warn":"bad";
