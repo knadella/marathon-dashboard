@@ -155,16 +155,12 @@ function render(d){
   document.getElementById("subtitle").innerHTML =
     `${racePrefix}Race <b>${s.race_date}</b> · <b>${s.days_to_race}</b> days to go · goal pace <b>${s.goal_pace_label}</b>`;
 
-  const adh = s.adherence_pct;
-  const adhCls = adh==null ? "" : adh>=95?"good":adh>=80?"warn":"bad";
   const stats = [
+    ["Volume to Date", `${s.km_logged_total??0}<small> km</small>`, "logged so far"],
+    ["Current Pace", s.current_pace_label??"—", "min/km"],
+    ["Current Sleep", s.latest_sleep_score??"—", "Oura score"],
+    ["Current Resting HR", s.latest_resting_hr!=null?`${s.latest_resting_hr}<small> bpm</small>`:"—", "latest week avg"],
     ["Days to Race", s.days_to_race, "", "accent"],
-    ["Current Week", s.current_week||"—", s.current_week?`${s.current_actual_km??0} / ${s.current_target_km} km`:"" ],
-    ["Weeks Done", `${s.weeks_completed}<small> / ${s.weeks_total}</small>`, ""],
-    ["Volume to Date", `${s.km_actual_to_date}<small> / ${s.km_target_to_date} km</small>`, ""],
-    ["Adherence", adh==null?"—":`${adh}%`, "", "", adhCls],
-    ["Latest Sleep", s.latest_sleep_score??"—", "Oura score"],
-    ["Resting HR", s.latest_resting_hr!=null?`${s.latest_resting_hr}<small> bpm</small>`:"—", "latest week avg"],
   ];
   document.getElementById("stats").innerHTML = stats.map(([l,v,note,cls,vcls])=>
     `<div class="stat ${cls||""}"><div class="label">${l}</div>
