@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-08T15:32:14.477402+00:00",
+  "generated_at": "2026-06-08T15:38:04.219223+00:00",
   "units": {
     "distance": "km",
     "pace": "sec_per_km"
@@ -50,9 +50,9 @@
       "phase": "Pre-training",
       "target_km": null,
       "target_long_run": null,
-      "actual_km": 26.7,
+      "actual_km": 13.4,
       "actual_long_run": 5.0,
-      "runs": 6,
+      "runs": 3,
       "avg_pace_sec": 400,
       "avg_pace_label": "6:40/km",
       "sleep_score": 70.9,
