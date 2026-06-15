@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-15T08:52:54.187217+00:00",
+  "generated_at": "2026-06-15T08:53:21.877239+00:00",
   "units": {
     "distance": "km",
     "pace": "sec_per_km"
@@ -43,7 +43,7 @@
     "current_week": "B1",
     "current_target_km": 40.0,
     "current_actual_km": 14.2,
-    "latest_resting_hr": 51.3,
+    "latest_resting_hr": 51.0,
     "latest_sleep_score": 70.0
   },
   "weeks": [
@@ -94,10 +94,10 @@
       "runs": 6,
       "avg_pace_sec": 445,
       "avg_pace_label": "7:25/km",
-      "sleep_score": 72.5,
-      "resting_hr": 51.3,
-      "hrv": 52.2,
-      "sleep_hours": 5.8,
+      "sleep_score": 74.6,
+      "resting_hr": 51.0,
+      "hrv": 52.7,
+      "sleep_hours": 6.0,
       "is_current": false,
       "is_past": true
     },
