@@ -54,7 +54,7 @@
   .paces .k { text-transform:uppercase; letter-spacing:.08em; font-size:.7rem; font-weight:600; }
 
   table { width:100%; border-collapse:collapse; font-size:.85rem; }
-  th,td { padding:.55rem .7rem; text-align:right; border-bottom:1px solid var(--border); }
+  th,td { padding:.55rem .7rem; text-align:right; border-bottom:1px solid var(--border); white-space:nowrap; }
   th:first-child,td:first-child{ text-align:left; }
   th { text-transform:uppercase; font-size:.66rem; font-weight:600; letter-spacing:.08em; color:var(--muted); }
   td.lbl { font-weight:600; color:var(--txt); }
@@ -73,6 +73,21 @@
   footer { color:var(--muted); font-size:.75rem; margin-top:1.5rem; text-align:center; }
   .err { background:rgba(196,30,58,.08); border-left:4px solid var(--accent); padding:1rem; border-radius:0 4px 4px 0; color:var(--txt); }
   svg { max-width:100%; height:auto; }
+
+  /* Mobile overrides — placed last so they win over the base rules above. */
+  @media(max-width:560px){
+    .container{ padding:1.25rem; }
+    .stat-grid{ grid-template-columns:repeat(2,1fr); gap:.75rem; margin-bottom:1.5rem; }
+    .stat{ padding:.8rem .85rem; border-left-width:3px; }
+    .stat .val{ font-size:1.5rem; }
+    .stat .label{ font-size:.62rem; }
+    .panel{ padding:1.15rem 1rem; margin-bottom:1.25rem; }
+    .panel h2{ font-size:1.05rem; }
+    .panel .cap{ font-size:.8rem; }
+    /* keep the week label visible while the rest of the row scrolls sideways */
+    td.lbl, th:first-child{ position:sticky; left:0; background:var(--bg-card); }
+    tr.current td.lbl{ background:#FBE9EC; }
+  }
 </style>
 </head>
 <body>
@@ -117,6 +132,31 @@
   </div>
 
   <div class="panel">
+    <h2>Running Heart Rate</h2>
+    <p class="cap">Weekly average HR while running, from Strava; a lower average at the same effort means the aerobic engine is improving</p>
+    <div class="legend">
+      <span><i class="swatch dot" style="background:var(--accent)"></i> Avg running HR</span>
+      <span><i class="swatch" style="background:var(--tan)"></i> Max HR</span>
+    </div>
+    <div id="hrChart"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Aerobic Efficiency</h2>
+    <p class="cap">Metres covered per heartbeat (distance ÷ total beats) — the combined pace-and-HR signal; rising means you go faster for the same effort</p>
+    <div class="legend">
+      <span><i class="swatch dot" style="background:var(--green)"></i> Efficiency (m/beat)</span>
+    </div>
+    <div id="effChart"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Full Plan</h2>
+    <p class="cap">Every week of the build to race day</p>
+    <div style="overflow-x:auto"><table id="planTable"></table></div>
+  </div>
+
+  <div class="panel">
     <h2>Recovery — Sleep Score &amp; Resting Heart Rate</h2>
     <p class="cap">Weekly averages from Oura; rising sleep / falling resting HR signal good adaptation</p>
     <div class="legend">
@@ -126,17 +166,11 @@
     <div id="recoveryChart"></div>
   </div>
 
-  <div class="panel">
-    <h2>Full Plan</h2>
-    <p class="cap">Every week of the build to race day</p>
-    <div style="overflow-x:auto"><table id="planTable"></table></div>
-  </div>
-
   <footer id="footer"></footer>
 </div>
 
 <script>
-const C = { accent:"#C41E3A", navy:"#0D3B66", green:"#2E8B57", purple:"#6B4C9A", muted:"#7A7A7A", border:"rgba(26,26,26,0.08)" };
+const C = { accent:"#C41E3A", navy:"#0D3B66", green:"#2E8B57", purple:"#6B4C9A", tan:"#D4A574", muted:"#7A7A7A", border:"rgba(26,26,26,0.08)" };
 const fmtPace = s => { if(s==null) return "—"; const m=Math.floor(s/60), x=Math.round(s%60); return `${m}:${String(x).padStart(2,"0")}`; };
 
 async function load(){
@@ -155,11 +189,15 @@ function render(d){
   document.getElementById("subtitle").innerHTML =
     `${racePrefix}Race <b>${s.race_date}</b> · <b>${s.days_to_race}</b> days to go · goal pace <b>${s.goal_pace_label}</b>`;
 
+  const effNote = s.efficiency_change_pct!=null
+    ? `${s.efficiency_change_pct>=0?"▲":"▼"} ${Math.abs(s.efficiency_change_pct)}% since start`
+    : "metres per heartbeat";
+  const effVcls = s.efficiency_change_pct>0?"good":(s.efficiency_change_pct<0?"bad":"");
   const stats = [
     ["Volume to Date", `${s.km_logged_total??0}<small> km</small>`, "logged so far"],
     ["Current Pace", s.current_pace_label??"—", "min/km"],
-    ["Current Sleep", s.latest_sleep_score??"—", "Oura score"],
-    ["Current Resting HR", s.latest_resting_hr!=null?`${s.latest_resting_hr}<small> bpm</small>`:"—", "latest week avg"],
+    ["Running HR", s.latest_run_hr!=null?`${s.latest_run_hr}<small> bpm</small>`:"—", "latest week avg"],
+    ["Aerobic Efficiency", s.latest_efficiency!=null?`${s.latest_efficiency.toFixed(2)}<small> m/beat</small>`:"—", effNote, "", effVcls],
     ["Days to Race", s.days_to_race, "", "accent"],
   ];
   document.getElementById("stats").innerHTML = stats.map(([l,v,note,cls,vcls])=>
@@ -177,12 +215,12 @@ function render(d){
       <td>${w.target_km??"—"}</td>
       <td>${w.actual_km??"—"}</td>
       <td>${w.avg_pace_label??"—"}</td>
-      <td>${w.sleep_score??"—"}</td>
-      <td>${w.resting_hr??"—"}</td>
+      <td>${w.run_hr??"—"}</td>
+      <td>${w.efficiency!=null?w.efficiency.toFixed(2):"—"}</td>
     </tr>`;}).join("");
   document.getElementById("planTable").innerHTML =
     `<thead><tr><th>Week</th><th>Starts</th><th>Plan km</th><th>Actual km</th>
-      <th>Avg pace</th><th>Sleep</th><th>RHR</th></tr></thead><tbody>${rows}</tbody>`;
+      <th>Avg pace</th><th>Run HR</th><th>Effic.</th></tr></thead><tbody>${rows}</tbody>`;
 
   document.getElementById("footer").textContent = `Last updated ${new Date(d.generated_at).toLocaleString()}`;
   draw(d);
@@ -201,6 +239,13 @@ function draw(d){
      {vals:d.weeks.map(w=>w.actual_long_run), color:C.green, dots:true, label:"actual"}],
     {flagRace:true});
   paceChart("#paceChart", labels, d.weeks.map(w=>w.avg_pace_sec), d.paces.marathon.sec);
+  lineChart("#hrChart", labels,
+    [{vals:d.weeks.map(w=>w.run_hr_max), color:C.tan, dash:true, label:"max"},
+     {vals:d.weeks.map(w=>w.run_hr), color:C.accent, dots:true, label:"avg"}],
+    {tightY:true, yTickFormat:v=>Math.round(v)});
+  lineChart("#effChart", labels,
+    [{vals:d.weeks.map(w=>w.efficiency), color:C.green, dots:true, label:"efficiency"}],
+    {tightY:true, yTickFormat:d3.format(".2f")});
   recoveryChart("#recoveryChart", labels, d.weeks.map(w=>w.sleep_score), d.weeks.map(w=>w.resting_hr));
 }
 
@@ -210,7 +255,14 @@ function scaffold(sel){
   return {svg,w,h,m,iw:w-m.l-m.r,ih:h-m.t-m.b};
 }
 function xBand(labels,iw){ return d3.scaleBand().domain(labels).range([0,iw]).padding(0.3); }
-function xticks(x){ return x.domain().filter((_,i)=>i%2===0); }
+// Thin out x labels to fit the available width: each label needs ~46px, so on a
+// narrow phone we show every Nth week instead of overlapping all 23 into a blur.
+function xticks(x){
+  const iw = x.range()[1] - x.range()[0];
+  const n = x.domain().length;
+  const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(iw / 46))));
+  return x.domain().filter((_,i)=>i%step===0);
+}
 
 // Shade phase regions (taper/race/pre-training) as a "course" backdrop.
 function phaseBands(g,x,ih){
@@ -283,10 +335,17 @@ function lineChart(sel,labels,series,opts){
   const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
   const x=xBand(labels,iw); const xc=v=>x(v)+x.bandwidth()/2;
   const allv=series.flatMap(s=>s.vals).filter(v=>v!=null);
-  const y=d3.scaleLinear().domain([0,d3.max(allv)*1.12]).range([ih,0]);
+  let dom;
+  if(opts.tightY && allv.length){
+    const lo=d3.min(allv), hi=d3.max(allv), span=hi-lo;
+    const pad = span>0 ? span*0.25 : (Math.abs(hi)*0.1 || 1);
+    dom=[lo-pad, hi+pad];
+  } else { dom=[0,(d3.max(allv)||1)*1.12]; }
+  const y=d3.scaleLinear().domain(dom).range([ih,0]);
   phaseBands(g,x,ih); gridY(g,y,iw);
   g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(xticks(x)));
-  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5));
+  const yAxisL=d3.axisLeft(y).ticks(5); if(opts.yTickFormat) yAxisL.tickFormat(opts.yTickFormat);
+  g.append("g").attr("class","axis").call(yAxisL);
   series.forEach((s,si)=>{
     const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>y(d.v)).curve(d3.curveMonotoneX);
     const data=labels.map((l,i)=>({l,v:s.vals[i]}));
