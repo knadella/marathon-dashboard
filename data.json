@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-23T05:45:16.041761+00:00",
+  "generated_at": "2026-07-24T05:41:47.607853+00:00",
   "units": {
     "distance": "km",
     "pace": "sec_per_km"
@@ -30,7 +30,7 @@
     "goal_name": "Sub-4:00",
     "race_name": "Verona Marathon",
     "race_date": "2026-11-15",
-    "days_to_race": 115,
+    "days_to_race": 114,
     "goal_pace_label": "5:41/km",
     "current_pace_sec": 388,
     "current_pace_label": "6:28/km",
@@ -43,8 +43,8 @@
     "current_week": "W1",
     "current_target_km": 52.0,
     "current_actual_km": 0.0,
-    "latest_resting_hr": 54.7,
-    "latest_sleep_score": 72.0,
+    "latest_resting_hr": 54.5,
+    "latest_sleep_score": 71.4,
     "latest_run_hr": 151.7,
     "latest_efficiency": 1.02,
     "efficiency_change_pct": 16.2
@@ -253,10 +253,10 @@
       "run_hr": null,
       "run_hr_max": null,
       "efficiency": null,
-      "sleep_score": 72.0,
-      "resting_hr": 54.7,
-      "hrv": 50.3,
-      "sleep_hours": 5.8,
+      "sleep_score": 71.4,
+      "resting_hr": 54.5,
+      "hrv": 50.0,
+      "sleep_hours": 6.0,
       "is_current": true,
       "is_past": false
     },
