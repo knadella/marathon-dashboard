@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Verona Marathon · Sub-4:00</title>
+<title>Running Analytics · Fitness &amp; Recovery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -46,6 +46,9 @@
     border-radius:0 var(--radius) var(--radius) 0; padding:1.75rem; margin-bottom:1.75rem; position:relative; }
   .panel::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--navy); border-radius:var(--radius) 0 0 var(--radius); }
   .panel h2 { font-family:var(--serif); font-weight:700; font-size:1.2rem; color:var(--txt); margin:0 0 .25rem; }
+  .panel h2 .tag { font-family:var(--sans); font-weight:600; font-size:.6rem; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--navy); background:rgba(13,59,102,.08); border:1px solid rgba(13,59,102,.15);
+    padding:.15rem .45rem; border-radius:100px; vertical-align:middle; margin-left:.5rem; }
   .panel .cap { font-style:italic; color:var(--muted); font-size:.85rem; margin:0 0 1.2rem; padding-bottom:.8rem; border-bottom:1px solid var(--border); }
 
   .paces { display:flex; flex-wrap:wrap; gap:1.4rem; margin-top:1rem; }
@@ -93,42 +96,43 @@
 <body>
 <div class="container">
   <header class="hero">
-    <div class="eyebrow">Training Tracker</div>
-    <h1 id="title">Marathon Training</h1>
+    <div class="eyebrow">Running Analytics</div>
+    <h1 id="title">Fitness &amp; Recovery</h1>
     <div class="sub" id="subtitle">Loading…</div>
   </header>
 
   <div class="stat-grid" id="stats"></div>
 
   <div class="panel">
-    <h2>Weekly Volume — Plan vs. Actual</h2>
-    <p class="cap">Kilometres per week against the periodised plan</p>
+    <h2>Aerobic Efficiency <span class="tag">fitness signal</span></h2>
+    <p class="cap">Metres covered per heartbeat (distance ÷ total beats) — the combined pace-and-HR signal. Rising means you go faster for the same effort; this is the single best "am I getting fitter" line on the page.</p>
     <div class="legend">
-      <span><i class="swatch" style="background:var(--navy)"></i> Plan</span>
-      <span><i class="swatch" style="background:var(--accent)"></i> Actual</span>
+      <span><i class="swatch dot" style="background:var(--green)"></i> Efficiency (m/beat)</span>
     </div>
-    <div id="volumeChart"></div>
+    <div id="effChart"></div>
   </div>
 
   <div class="panel">
-    <h2>Long Run Progression</h2>
-    <p class="cap">Longest single run each week, building toward race distance</p>
+    <h2>Intensity Distribution <span class="tag">80/20</span></h2>
+    <p class="cap">Share of weekly running time that was easy vs. moderate vs. hard, from time-in-HR-zone. Endurance gains come from keeping ~80% easy; the dashed line marks the 80% easy target.</p>
     <div class="legend">
-      <span><i class="swatch" style="background:var(--navy)"></i> Plan</span>
-      <span><i class="swatch dot" style="background:var(--green)"></i> Actual</span>
+      <span><i class="swatch" style="background:var(--green)"></i> Easy</span>
+      <span><i class="swatch" style="background:var(--tan)"></i> Moderate</span>
+      <span><i class="swatch" style="background:var(--accent)"></i> Hard</span>
+      <span><i class="swatch" style="background:var(--navy);height:0;border-top:2px dashed var(--navy)"></i> 80% easy</span>
     </div>
-    <div id="longRunChart"></div>
+    <div id="intensityChart"></div>
   </div>
 
   <div class="panel">
-    <h2>Average Pace vs. Goal Marathon Pace</h2>
-    <p class="cap">Weekly average pace; goal marathon pace shown as reference (faster is higher)</p>
+    <h2>Training Load vs. Recovery <span class="tag">absorb or dig a hole</span></h2>
+    <p class="cap">Acute:chronic workload ratio (this week's load ÷ your 4-week average) against HRV. The shaded 0.8–1.3 band is the "sweet spot"; spikes above ~1.5 raise injury risk. If HRV falls as load climbs, you're not absorbing the training.</p>
     <div class="legend">
-      <span><i class="swatch dot" style="background:var(--accent)"></i> Avg pace</span>
-      <span><i class="swatch" style="background:var(--green)"></i> Goal MP</span>
+      <span><i class="swatch" style="background:var(--navy)"></i> ACWR (load ratio)</span>
+      <span><i class="swatch dot" style="background:var(--purple)"></i> HRV (ms)</span>
+      <span><i class="swatch" style="background:rgba(46,139,87,0.18)"></i> Safe band</span>
     </div>
-    <div id="paceChart"></div>
-    <div class="paces" id="paceTargets"></div>
+    <div id="loadChart"></div>
   </div>
 
   <div class="panel">
@@ -142,18 +146,14 @@
   </div>
 
   <div class="panel">
-    <h2>Aerobic Efficiency</h2>
-    <p class="cap">Metres covered per heartbeat (distance ÷ total beats) — the combined pace-and-HR signal; rising means you go faster for the same effort</p>
+    <h2>Average Pace</h2>
+    <p class="cap">Weekly average pace; the sub-4:00 marathon pace is shown as an aspirational reference (faster is higher)</p>
     <div class="legend">
-      <span><i class="swatch dot" style="background:var(--green)"></i> Efficiency (m/beat)</span>
+      <span><i class="swatch dot" style="background:var(--accent)"></i> Avg pace</span>
+      <span><i class="swatch" style="background:var(--green)"></i> Sub-4 pace</span>
     </div>
-    <div id="effChart"></div>
-  </div>
-
-  <div class="panel">
-    <h2>Full Plan</h2>
-    <p class="cap">Every week of the build to race day</p>
-    <div style="overflow-x:auto"><table id="planTable"></table></div>
+    <div id="paceChart"></div>
+    <div class="paces" id="paceTargets"></div>
   </div>
 
   <div class="panel">
@@ -164,6 +164,32 @@
       <span><i class="swatch dot" style="background:var(--accent)"></i> Resting HR (bpm)</span>
     </div>
     <div id="recoveryChart"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Weekly Volume</h2>
+    <p class="cap">Kilometres per week; the periodised plan is kept as a loose reference, not a target</p>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--navy)"></i> Plan (reference)</span>
+      <span><i class="swatch" style="background:var(--accent)"></i> Actual</span>
+    </div>
+    <div id="volumeChart"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Long Run Progression</h2>
+    <p class="cap">Longest single run each week</p>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--navy)"></i> Plan (reference)</span>
+      <span><i class="swatch dot" style="background:var(--green)"></i> Actual</span>
+    </div>
+    <div id="longRunChart"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Weekly Detail</h2>
+    <p class="cap">Every week — volume, intensity split, efficiency and load ratio</p>
+    <div style="overflow-x:auto"><table id="planTable"></table></div>
   </div>
 
   <footer id="footer"></footer>
@@ -183,22 +209,35 @@ async function load(){
 
 function render(d){
   const s = d.summary;
-  document.getElementById("title").textContent =
-    s.race_name ? `${s.race_name} · ${s.goal_name}` : `Marathon Training · ${s.goal_name}`;
-  const racePrefix = s.race_name ? `${s.race_name} · ` : "";
-  document.getElementById("subtitle").innerHTML =
-    `${racePrefix}Race <b>${s.race_date}</b> · <b>${s.days_to_race}</b> days to go · goal pace <b>${s.goal_pace_label}</b>`;
+  document.getElementById("title").textContent = "Running Analytics";
+  const focus = s.primary_focus || "Aerobic fitness & consistency";
+  const raceBit = s.race_name
+    ? `${s.race_name} <b>${s.race_date}</b> · <b>${s.days_to_race}</b> days out`
+    : "";
+  const aspir = s.goal_aspirational
+    ? ` · <b>${s.goal_name}</b> aspiration (${s.goal_pace_label})`
+    : ` · goal <b>${s.goal_name}</b> (${s.goal_pace_label})`;
+  document.getElementById("subtitle").innerHTML = `${focus}${raceBit?` · ${raceBit}`:""}${aspir}`;
 
-  const effNote = s.efficiency_change_pct!=null
-    ? `${s.efficiency_change_pct>=0?"▲":"▼"} ${Math.abs(s.efficiency_change_pct)}% since start`
-    : "metres per heartbeat";
+  const arrow = (v, good_up=true) => v==null ? "" :
+    `${v>=0?"▲":"▼"} ${Math.abs(v)}% since start`;
   const effVcls = s.efficiency_change_pct>0?"good":(s.efficiency_change_pct<0?"bad":"");
+  const hrvVcls = s.hrv_change_pct>0?"good":(s.hrv_change_pct<0?"bad":"");
+  // ACWR colour: optimal green, caution/detraining amber, high risk red
+  const acwrVcls = {optimal:"good", caution:"warn", detraining:"warn", "high risk":"bad"}[s.acwr_status]||"";
+  const easy = s.trailing_easy_pct;
+  const easyVcls = easy==null?"":(easy>=75?"good":(easy>=65?"warn":"bad"));
+
   const stats = [
+    ["Aerobic Efficiency", s.latest_efficiency!=null?`${s.latest_efficiency.toFixed(2)}<small> m/beat</small>`:"—",
+      s.efficiency_change_pct!=null?arrow(s.efficiency_change_pct):"metres per heartbeat", "accent", effVcls],
+    ["Training Load", s.latest_acwr!=null?s.latest_acwr.toFixed(2):"—",
+      s.acwr_status?`ACWR · ${s.acwr_status}`:"acute:chronic ratio", "", acwrVcls],
+    ["Easy Running", easy!=null?`${easy}<small>%</small>`:"—", "trailing 4 wks · aim ~80%", "", easyVcls],
+    ["HRV", s.latest_hrv!=null?`${s.latest_hrv}<small> ms</small>`:"—",
+      s.hrv_change_pct!=null?arrow(s.hrv_change_pct):"overnight, from Oura", "", hrvVcls],
+    ["Current Pace", s.current_pace_label??"—", "min/km · latest week"],
     ["Volume to Date", `${s.km_logged_total??0}<small> km</small>`, "logged so far"],
-    ["Current Pace", s.current_pace_label??"—", "min/km"],
-    ["Running HR", s.latest_run_hr!=null?`${s.latest_run_hr}<small> bpm</small>`:"—", "latest week avg"],
-    ["Aerobic Efficiency", s.latest_efficiency!=null?`${s.latest_efficiency.toFixed(2)}<small> m/beat</small>`:"—", effNote, "", effVcls],
-    ["Days to Race", s.days_to_race, "", "accent"],
   ];
   document.getElementById("stats").innerHTML = stats.map(([l,v,note,cls,vcls])=>
     `<div class="stat ${cls||""}"><div class="label">${l}</div>
@@ -209,18 +248,20 @@ function render(d){
 
   const rows = d.weeks.map(w=>{
     const cls = w.is_current?"current":(w.is_past?"":"future");
+    const acwrTxt = w.acwr!=null?w.acwr.toFixed(2):"—";
     return `<tr class="${cls}">
       <td class="lbl">${w.week_label}<span class="phase">${w.phase}</span></td>
       <td>${w.week_start}</td>
-      <td>${w.target_km??"—"}</td>
       <td>${w.actual_km??"—"}</td>
+      <td>${w.easy_pct!=null?w.easy_pct+"%":"—"}</td>
       <td>${w.avg_pace_label??"—"}</td>
       <td>${w.run_hr??"—"}</td>
       <td>${w.efficiency!=null?w.efficiency.toFixed(2):"—"}</td>
+      <td>${acwrTxt}</td>
     </tr>`;}).join("");
   document.getElementById("planTable").innerHTML =
-    `<thead><tr><th>Week</th><th>Starts</th><th>Plan km</th><th>Actual km</th>
-      <th>Avg pace</th><th>Run HR</th><th>Effic.</th></tr></thead><tbody>${rows}</tbody>`;
+    `<thead><tr><th>Week</th><th>Starts</th><th>km</th><th>Easy%</th>
+      <th>Avg pace</th><th>Run HR</th><th>Effic.</th><th>ACWR</th></tr></thead><tbody>${rows}</tbody>`;
 
   document.getElementById("footer").textContent = `Last updated ${new Date(d.generated_at).toLocaleString()}`;
   draw(d);
@@ -233,20 +274,22 @@ let WEEKS = [];
 function draw(d){
   WEEKS = d.weeks;
   const labels = d.weeks.map(w=>w.week_label);
+  lineChart("#effChart", labels,
+    [{vals:d.weeks.map(w=>w.efficiency), color:C.green, dots:true, label:"efficiency"}],
+    {tightY:true, yTickFormat:d3.format(".2f")});
+  intensityChart("#intensityChart", labels, d.weeks);
+  loadChart("#loadChart", labels, d.weeks.map(w=>w.acwr), d.weeks.map(w=>w.hrv));
+  lineChart("#hrChart", labels,
+    [{vals:d.weeks.map(w=>w.run_hr_max), color:C.tan, dash:true, label:"max"},
+     {vals:d.weeks.map(w=>w.run_hr), color:C.accent, dots:true, label:"avg"}],
+    {tightY:true, yTickFormat:v=>Math.round(v)});
+  paceChart("#paceChart", labels, d.weeks.map(w=>w.avg_pace_sec), d.paces.marathon.sec);
+  recoveryChart("#recoveryChart", labels, d.weeks.map(w=>w.sleep_score), d.weeks.map(w=>w.resting_hr));
   barChart("#volumeChart", labels, d.weeks.map(w=>w.target_km), d.weeks.map(w=>w.actual_km));
   lineChart("#longRunChart", labels,
     [{vals:d.weeks.map(w=>w.target_long_run), color:C.navy, dash:true, label:"plan"},
      {vals:d.weeks.map(w=>w.actual_long_run), color:C.green, dots:true, label:"actual"}],
     {flagRace:true});
-  paceChart("#paceChart", labels, d.weeks.map(w=>w.avg_pace_sec), d.paces.marathon.sec);
-  lineChart("#hrChart", labels,
-    [{vals:d.weeks.map(w=>w.run_hr_max), color:C.tan, dash:true, label:"max"},
-     {vals:d.weeks.map(w=>w.run_hr), color:C.accent, dots:true, label:"avg"}],
-    {tightY:true, yTickFormat:v=>Math.round(v)});
-  lineChart("#effChart", labels,
-    [{vals:d.weeks.map(w=>w.efficiency), color:C.green, dots:true, label:"efficiency"}],
-    {tightY:true, yTickFormat:d3.format(".2f")});
-  recoveryChart("#recoveryChart", labels, d.weeks.map(w=>w.sleep_score), d.weeks.map(w=>w.resting_hr));
 }
 
 function scaffold(sel){
@@ -380,6 +423,72 @@ function paceChart(sel,labels,paces,goalSec){
   const ln=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>y(d.v)).curve(d3.curveMonotoneX);
   drawPath(g.append("path").datum(data).attr("fill","none").attr("stroke",C.accent).attr("stroke-width",2.5).attr("stroke-linecap","round").attr("d",ln), DUR+300, 150);
   popDots(g.selectAll(null).data(data.filter(d=>d.v!=null)).join("circle").attr("cx",d=>xc(d.l)).attr("cy",d=>y(d.v)).attr("fill",C.accent), DUR);
+  currentMarker(g,x,ih);
+}
+
+// 100%-stacked intensity bars (easy/moderate/hard share of weekly run time),
+// with an 80%-easy reference line. Weeks without zone data are simply blank.
+function intensityChart(sel,labels,weeks){
+  const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
+  const x=xBand(labels,iw); const y=d3.scaleLinear().domain([0,100]).range([ih,0]);
+  phaseBands(g,x,ih);
+  g.append("g").attr("class","axis gridy").call(d3.axisLeft(y).ticks(5).tickSize(-iw).tickFormat(""))
+    .call(s=>s.select(".domain").remove()).call(s=>s.selectAll(".tick line").attr("class","gridline"));
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(xticks(x)));
+  g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(5).tickFormat(v=>v+"%"));
+  const bw=x.bandwidth();
+  const segColors={easy:C.green,moderate:C.tan,hard:C.accent};
+  weeks.forEach((w,i)=>{
+    const total=(w.easy_min||0)+(w.moderate_min||0)+(w.hard_min||0);
+    if(total<=0) return;
+    const parts=[["easy",w.easy_min||0],["moderate",w.moderate_min||0],["hard",w.hard_min||0]];
+    let cum=0;
+    parts.forEach(([k,v],pi)=>{
+      const frac=100*v/total; const y0=cum, y1=cum+frac; cum=y1;
+      if(frac<=0) return;
+      g.append("rect").attr("x",x(labels[i])).attr("width",bw)
+        .attr("fill",segColors[k]).attr("y",ih).attr("height",0).attr("opacity",.9)
+        .transition().duration(DUR).delay(i*22+pi*60).ease(EASE)
+        .attr("y",y(y1)).attr("height",y(y0)-y(y1));
+    });
+  });
+  // 80% easy reference (easy is stacked from the bottom, so line sits at 80%).
+  g.append("line").attr("x1",0).attr("x2",iw).attr("y1",y(80)).attr("y2",y(80))
+    .attr("stroke",C.navy).attr("stroke-width",1.5).attr("stroke-dasharray","5,4").attr("opacity",0)
+    .transition().delay(DUR).duration(400).attr("opacity",.7);
+  currentMarker(g,x,ih);
+}
+
+// ACWR (load ratio, left axis) with the 0.8–1.3 safe band, plus HRV (right axis).
+function loadChart(sel,labels,acwr,hrv){
+  const {svg,m,iw,ih}=scaffold(sel); const g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
+  const x=xBand(labels,iw); const xc=v=>x(v)+x.bandwidth()/2;
+  const av=acwr.filter(v=>v!=null), hv=hrv.filter(v=>v!=null);
+  const yL=d3.scaleLinear().domain([0, Math.max(1.6,(d3.max(av)||1)*1.12)]).range([ih,0]);
+  const yR=d3.scaleLinear().domain([(d3.min(hv)-4)||30,(d3.max(hv)+4)||80]).range([ih,0]);
+  phaseBands(g,x,ih);
+  // safe band 0.8–1.3
+  g.append("rect").attr("x",0).attr("y",yL(1.3)).attr("width",iw).attr("height",yL(0.8)-yL(1.3))
+    .attr("fill","rgba(46,139,87,0.16)");
+  g.append("g").attr("class","axis gridy").call(d3.axisLeft(yL).ticks(5).tickSize(-iw).tickFormat(""))
+    .call(s=>s.select(".domain").remove()).call(s=>s.selectAll(".tick line").attr("class","gridline"));
+  g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).tickValues(xticks(x)));
+  g.append("g").attr("class","axis").call(d3.axisLeft(yL).ticks(5).tickFormat(d3.format(".1f")));
+  g.append("g").attr("class","axis").attr("transform",`translate(${iw},0)`).call(d3.axisRight(yR).ticks(5));
+  // HRV on right axis (context)
+  const hrvData=labels.map((l,i)=>({l,v:hrv[i]}));
+  const hrvLn=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>yR(d.v)).curve(d3.curveMonotoneX);
+  drawPath(g.append("path").datum(hrvData).attr("fill","none").attr("stroke",C.purple)
+    .attr("stroke-width",2).attr("stroke-linecap","round").attr("opacity",.85).attr("d",hrvLn), DUR+300, 150);
+  popDots(g.selectAll(null).data(hrvData.filter(d=>d.v!=null)).join("circle")
+    .attr("cx",d=>xc(d.l)).attr("cy",d=>yR(d.v)).attr("fill",C.purple), DUR);
+  // ACWR on left axis (primary)
+  const acwrData=labels.map((l,i)=>({l,v:acwr[i]}));
+  const acwrLn=d3.line().defined(d=>d.v!=null).x(d=>xc(d.l)).y(d=>yL(d.v)).curve(d3.curveMonotoneX);
+  drawPath(g.append("path").datum(acwrData).attr("fill","none").attr("stroke",C.navy)
+    .attr("stroke-width",2.5).attr("stroke-linecap","round").attr("d",acwrLn), DUR+300, 0);
+  popDots(g.selectAll(null).data(acwrData.filter(d=>d.v!=null)).join("circle")
+    .attr("cx",d=>xc(d.l)).attr("cy",d=>yL(d.v)).attr("fill",C.navy), DUR);
   currentMarker(g,x,ih);
 }
 
