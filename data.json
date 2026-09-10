@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-09T07:42:32.731325+00:00",
+  "generated_at": "2026-09-10T07:40:15.673368+00:00",
   "units": {
     "distance": "km",
     "pace": "sec_per_km"
@@ -32,7 +32,7 @@
     "primary_focus": "Aerobic fitness, efficiency & consistency",
     "race_name": "Verona Marathon",
     "race_date": "2026-11-15",
-    "days_to_race": 67,
+    "days_to_race": 66,
     "goal_pace_label": "5:41/km",
     "current_pace_sec": 396,
     "current_pace_label": "6:36/km",
@@ -45,8 +45,8 @@
     "current_week": "W8",
     "current_target_km": 58.0,
     "current_actual_km": 24.5,
-    "latest_resting_hr": 51.0,
-    "latest_sleep_score": 65.3,
+    "latest_resting_hr": 51.3,
+    "latest_sleep_score": 63.2,
     "latest_run_hr": 162.1,
     "latest_efficiency": 0.935,
     "efficiency_change_pct": 6.5,
@@ -54,8 +54,8 @@
     "acwr_status": "high risk",
     "latest_easy_pct": 29,
     "trailing_easy_pct": 18,
-    "latest_hrv": 55.0,
-    "hrv_change_pct": 20.6
+    "latest_hrv": 54.0,
+    "hrv_change_pct": 18.4
   },
   "weeks": [
     {
@@ -590,15 +590,15 @@
       "easy_pct": 29,
       "cadence_spm": 158.6,
       "acwr": 1.74,
-      "sleep_score": 65.3,
-      "resting_hr": 51.0,
-      "hrv": 55.0,
-      "sleep_hours": 5.2,
-      "deep_min": 35.2,
-      "rem_min": 64.2,
+      "sleep_score": 63.2,
+      "resting_hr": 51.3,
+      "hrv": 54.0,
+      "sleep_hours": 5.4,
+      "deep_min": 47.5,
+      "rem_min": 80.3,
       "resp_rate": 14.8,
-      "temp_dev": -0.2,
-      "bedtime_consistency_min": 5,
+      "temp_dev": -0.1,
+      "bedtime_consistency_min": 6,
       "is_current": true,
       "is_past": false
     },
