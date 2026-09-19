@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-18T07:47:02.621442+00:00",
+  "generated_at": "2026-09-19T07:40:52.688475+00:00",
   "units": {
     "distance": "km",
     "pace": "sec_per_km"
@@ -32,7 +32,7 @@
     "primary_focus": "Aerobic fitness, efficiency & consistency",
     "race_name": "Verona Marathon",
     "race_date": "2026-11-15",
-    "days_to_race": 58,
+    "days_to_race": 57,
     "goal_pace_label": "5:41/km",
     "current_pace_sec": 396,
     "current_pace_label": "6:36/km",
@@ -593,7 +593,7 @@
       "sleep_score": 61.3,
       "resting_hr": 52.1,
       "hrv": 53.6,
-      "sleep_hours": 4.9,
+      "sleep_hours": 4.8,
       "deep_min": 49.5,
       "rem_min": 71.4,
       "resp_rate": 14.7,
