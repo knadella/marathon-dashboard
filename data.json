@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-20T10:45:16.817796+00:00",
+  "generated_at": "2026-11-21T10:28:59.213933+00:00",
   "units": {
     "distance": "km",
     "pace": "sec_per_km"
@@ -32,7 +32,7 @@
     "primary_focus": "Aerobic fitness, efficiency & consistency",
     "race_name": "Verona Marathon",
     "race_date": "2026-11-15",
-    "days_to_race": -5,
+    "days_to_race": -6,
     "goal_pace_label": "5:41/km",
     "current_pace_sec": 402,
     "current_pace_label": "6:42/km",
@@ -45,8 +45,8 @@
     "current_week": "W18",
     "current_target_km": 32.0,
     "current_actual_km": 42.5,
-    "latest_resting_hr": 60.0,
-    "latest_sleep_score": 69.6,
+    "latest_resting_hr": 58.6,
+    "latest_sleep_score": 72.0,
     "latest_run_hr": 166.0,
     "latest_efficiency": 0.899,
     "efficiency_change_pct": 2.4,
@@ -54,8 +54,8 @@
     "acwr_status": "caution",
     "latest_easy_pct": 7,
     "trailing_easy_pct": 34,
-    "latest_hrv": 40.0,
-    "hrv_change_pct": -12.3
+    "latest_hrv": 42.4,
+    "hrv_change_pct": -7.0
   },
   "weeks": [
     {
@@ -879,14 +879,14 @@
       "cadence_spm": 161.0,
       "acwr": 0.33,
       "sleep_score": 77.1,
-      "resting_hr": 54.1,
-      "hrv": 52.3,
-      "sleep_hours": 6.6,
-      "deep_min": 73.0,
-      "rem_min": 99.1,
+      "resting_hr": 54.2,
+      "hrv": 53.7,
+      "sleep_hours": 6.4,
+      "deep_min": 70.7,
+      "rem_min": 94.6,
       "resp_rate": 14.1,
       "temp_dev": 0.1,
-      "bedtime_consistency_min": 45,
+      "bedtime_consistency_min": 39,
       "is_current": false,
       "is_past": true
     },
@@ -910,15 +910,15 @@
       "easy_pct": 7,
       "cadence_spm": 160.6,
       "acwr": 1.42,
-      "sleep_score": 69.6,
-      "resting_hr": 60.0,
-      "hrv": 40.0,
-      "sleep_hours": 6.5,
-      "deep_min": 57.2,
-      "rem_min": 89.6,
-      "resp_rate": 14.8,
+      "sleep_score": 72.0,
+      "resting_hr": 58.6,
+      "hrv": 42.4,
+      "sleep_hours": 6.6,
+      "deep_min": 64.5,
+      "rem_min": 95.0,
+      "resp_rate": 14.6,
       "temp_dev": 0.3,
-      "bedtime_consistency_min": 92,
+      "bedtime_consistency_min": 83,
       "is_current": true,
       "is_past": false
     }
